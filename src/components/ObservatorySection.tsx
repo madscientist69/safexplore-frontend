@@ -17,7 +17,7 @@ export default function ObservatorySection({ refreshTrigger = 0 }: ObservatoryPr
   useEffect(() => {
     const fetchObservatoryData = async () => {
       try {
-        const response = await fetch("${process.env.NEXT_PUBLIC_API_URL}/api/observatory");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/observatory`);
         const data = await response.json();
         setStats(data);
         setLoading(false);
