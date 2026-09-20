@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Check, Copy, Download, ShieldCheck, AlertOctagon, Terminal, FileCode, CheckCircle2 } from "lucide-react";
+import { X, Check, Copy, Download, ShieldCheck } from "lucide-react";
+import jsPDF from "jspdf";
 
 interface RemediationModalProps {
   isOpen: boolean;
@@ -20,6 +21,51 @@ export default function RemediationModal({ isOpen, onClose, targetUrl }: Remedia
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
+  const handleDownloadReport = () => {
+    const doc = new jsPDF();
+    
+    // Header Laporan
+    doc.setFontSize(22);
+    doc.setTextColor(241, 90, 36);
+    doc.text("Laporan Audit Keamanan WebPatrol", 20, 20);
+    
+    // Informasi Target
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Domain Target: ${targetUrl}`, 20, 32);
+    doc.text(`Tanggal Audit: ${new Date().toLocaleDateString('id-ID')} - ${new Date().toLocaleTimeString('id-ID')}`, 20, 40);
+    doc.text(`Status Analisis: TERINFEKSI (Injeksi SEO & Cloaking)`, 20, 48);
+    
+    // Garis Pemisah
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, 55, 190, 55);
+    
+    // Ringkasan Remediasi
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Langkah Remediasi & Pembersihan:", 20, 68);
+    
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    const steps = [
+      "1. Hapus File Backdoor Shell yang Teridentifikasi (Cek direktori uploads/assets).",
+      "2. Terapkan aturan Hardening .htaccess untuk memblokir eksekusi PHP ilegal.",
+      "3. Blokir User-Agent bot peretas (SemrushBot, AhrefsBot, dll) via web server.",
+      "4. Gunakan Google Search Console (GSC) menu 'Removals' untuk hapus URL spam.",
+      "5. Lakukan submit ulang sitemap.xml yang bersih untuk validasi re-indexing."
+    ];
+    doc.text(steps, 20, 78);
+    
+    // Footer
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text("Dokumen ini dihasilkan secara otomatis oleh Sistem WebPatrol.", 20, 280);
+
+    // Proses Unduh
+    doc.save(`Audit_Laporan_${targetUrl}.pdf`);
+  };
+
   const htaccessSnippet = `# Safexplore Anti-SEO Cloaking & Bad Bot Blocker
 <IfModule mod_rewrite.c>
 RewriteEngine On
@@ -32,17 +78,6 @@ RewriteRule .* - [F,L]
 RewriteCond %{QUERY_STRING} (slot|gacor|togel|casino|judi) [NC]
 RewriteRule .* - [F,L]
 </IfModule>`;
-
-  const nginxSnippet = `# Nginx Block PHP in Uploads
-location ~* /(?:uploads|files|assets)/.*\\.php$ {
-    deny all;
-    access_log off;
-    log_not_found off;
-}
-# Block suspicious referral spam
-if ($http_referer ~* (slot|gacor|judi|poker)) {
-    return 403;
-}`;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
@@ -127,8 +162,8 @@ if ($http_referer ~* (slot|gacor|judi|poker)) {
               </div>
             </div>
             <button
-              onClick={() => alert(`Laporan audit resmi Safexplore untuk ${targetUrl} telah diunduh!`)}
-              className="bg-[#0b3c61] hover:bg-[#082a44] text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2 shadow cursor-pointer whitespace-nowrap"
+              onClick={handleDownloadReport}
+              className="bg-[#0b3c61] hover:bg-[#082a44] text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2 shadow cursor-pointer whitespace-nowrap transition-colors"
             >
               <Download className="w-4 h-4" />
               <span>Unduh Laporan</span>
@@ -141,7 +176,7 @@ if ($http_referer ~* (slot|gacor|judi|poker)) {
         <div className="bg-gray-100 p-4 border-t border-gray-200 flex justify-end">
           <button
             onClick={onClose}
-            className="bg-[#f15a24] hover:bg-[#d94a18] text-white font-bold text-xs px-6 py-2 rounded-lg shadow cursor-pointer"
+            className="bg-[#f15a24] hover:bg-[#d94a18] text-white font-bold text-xs px-6 py-2 rounded-lg shadow cursor-pointer transition-colors"
           >
             Selesai
           </button>

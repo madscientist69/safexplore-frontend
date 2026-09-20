@@ -12,6 +12,10 @@ import Footer from "@/components/Footer";
 export default function Home() {
   const [viewState, setViewState] = useState<"home" | "scanning" | "result">("home");
   const [targetUrl, setTargetUrl] = useState("smansatu.sch.id");
+  const [scanResult, setScanResult] = useState<any>(null);
+  
+  // Trigger update untuk Observatory
+  const [scanCount, setScanCount] = useState(0);
 
   const handleStartScan = (url: string) => {
     setTargetUrl(url);
@@ -19,20 +23,23 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleScanComplete = () => {
+  const handleScanComplete = (data: any) => {
+    setScanResult(data);
+    // Memicu fetch ulang di ObservatorySection
+    setScanCount(prev => prev + 1);
     setViewState("result");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleBackToHome = () => {
     setViewState("home");
+    setScanResult(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#f5f7f9] text-[#1c2a38]">
       
-      {/* 1. SCANNING MODAL STATE (Screenshots 2, 3, 4) */}
       {viewState === "scanning" && (
         <ScanModal
           targetUrl={targetUrl}
@@ -41,18 +48,16 @@ export default function Home() {
         />
       )}
 
-      {/* 2. SCAN RESULT STATE (Screenshot 5) */}
       {viewState === "result" && (
         <ResultView
           targetUrl={targetUrl}
+          scanData={scanResult}
           onBackToSearch={handleBackToHome}
         />
       )}
 
-      {/* 3. HOME LANDING STATE (Screenshot 1) */}
       {viewState === "home" && (
         <>
-          {/* Header Navigation */}
           <Navbar
             onNavigate={(id) => {
               const el = document.getElementById(id);
@@ -62,17 +67,13 @@ export default function Home() {
           />
 
           <main className="flex-1 flex flex-col">
-            {/* Hero Section */}
             <HeroSection onStartScan={handleStartScan} />
-
-            {/* "Tahukah Kalian?" Section */}
             <AboutSection />
-
-            {/* "Observatory Page" Section */}
-            <ObservatorySection />
+            
+            {/* Lempar trigger ke Observatory */}
+            <ObservatorySection refreshTrigger={scanCount} />
           </main>
 
-          {/* Footer */}
           <Footer />
         </>
       )}

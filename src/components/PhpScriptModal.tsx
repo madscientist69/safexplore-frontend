@@ -48,7 +48,7 @@ echo "==============================================\\n\\n";
 function scanDirectory($dir, &$detectedFiles, $patterns) {
     $items = scandir($dir);
     foreach ($items as $item) {
-        if ($item === '.' || $item === '..' || strpos($item, 'safexplore_') === 0) continue;
+        if ($item === '.' || $item === '..' || strpos($item, 'safexplore') === 0) continue;
         $path = $dir . '/' . $item;
         if (is_dir($path)) {
             scanDirectory($path, $detectedFiles, $patterns);

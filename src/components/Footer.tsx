@@ -20,7 +20,7 @@ export default function Footer() {
           <div className="flex flex-col gap-1.5 mt-2">
             {/* Instagram */}
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/depressedhighschooler_official/"
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-2 text-xs md:text-sm font-bold text-gray-800 hover:text-[#f15a24] transition-colors font-mono"
@@ -30,12 +30,12 @@ export default function Footer() {
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
                 <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
               </svg>
-              <span>@DEPRESSEDHIGHSCHOOLER</span>
+              <span>DEPRESSEDHIGHSCHOOLER_OFFICIAL</span>
             </a>
 
             {/* YouTube */}
             <a
-              href="https://youtube.com"
+              href="https://www.youtube.com/@DepressedHighSchooler"
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-2 text-xs md:text-sm font-bold text-gray-800 hover:text-[#f15a24] transition-colors font-mono"
@@ -44,7 +44,7 @@ export default function Footer() {
                 <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
                 <path d="m10 15 5-3-5-3z" fill="currentColor" />
               </svg>
-              <span>DEPRESSED HIGH SCHOOLER</span>
+              <span>@DEPRESSEDHIGHSCHOOLER</span>
             </a>
           </div>
         </div>

@@ -9,7 +9,7 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ onStartScan }: HeroSectionProps) {
-  const [url, setUrl] = useState("smansatu.sch.id");
+  const [url, setUrl] = useState("");
 
   const sampleTargets = [
     { name: "smansatu.sch.id", label: "SMA Negeri 1 (Sch.id)", risk: "Tinggi (Injeksi Gacor)" },
