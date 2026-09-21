@@ -23,7 +23,7 @@ interface IndonesiaMapProps {
 export default function IndonesiaMap({ filter, apiData }: IndonesiaMapProps) {
   // Mapping ID frontend dengan Key yang dikirim Backend
   const MAPPING = {
-    sumatra: { name: "Sumatera (Aceh, Sumut, dll.)", backendKey: "Sumatera" },
+    sumatra: { name: "Sumatera (Aceh, Sumut, Riau, dll)", backendKey: "Sumatera" },
     jawa: { name: "Jawa (DKI Jakarta, Jabar, Jatim)", backendKey: "Jawa" },
     kalimantan: { name: "Kalimantan (Kalbar, Kalsel, Kaltim)", backendKey: "Kalimantan" },
     sulawesi: { name: "Sulawesi (Sulsel, Sulteng, Sulut)", backendKey: "Sulawesi" },
@@ -32,36 +32,33 @@ export default function IndonesiaMap({ filter, apiData }: IndonesiaMapProps) {
     papua: { name: "Papua & Papua Barat", backendKey: "Papua" }
   };
 
-  // UBAH: Nilai awal sekarang null (tidak ada yang dipilih)
   const [selectedRegionId, setSelectedRegionId] = useState<keyof typeof MAPPING | null>(null);
   const [hoveredRegionId, setHoveredRegionId] = useState<keyof typeof MAPPING | null>(null);
 
   const activeId = hoveredRegionId || selectedRegionId;
   
-  // Fungsi untuk menghitung total Nasional jika tidak ada region yang disorot
+  // Kalkulasi statistik nasional yang akurat murni berdasarkan akumulasi data asli
   const calculateNationalStats = () => {
-    let totalScore = 0;
     let totalInfected = 0;
     let totalScanned = 0;
-    let regionsCount = 0;
 
     if (apiData && Object.keys(apiData).length > 0) {
       Object.values(apiData).forEach((reg) => {
-        totalScore += reg.score;
         totalInfected += reg.infected;
         totalScanned += reg.total;
-        if (reg.total > 0) regionsCount++;
       });
     }
 
-    const avgScore = regionsCount > 0 ? Math.round(totalScore / regionsCount) : 100;
+    const threatPercentage = totalScanned > 0 ? Math.round((totalInfected / totalScanned) * 100) : 0;
+    const nationalScore = 100 - threatPercentage;
+
     let status = "AMAN / HIJAU";
-    if (avgScore < 60) status = "BAHAYA / MERAH";
-    else if (avgScore < 80) status = "WASPADA / KUNING";
+    if (nationalScore < 60) status = "BAHAYA / MERAH";
+    else if (nationalScore < 80) status = "WASPADA / KUNING";
 
     return {
       name: "Indonesia (Nasional)",
-      score: avgScore,
+      score: nationalScore,
       infected: totalInfected,
       total: totalScanned,
       main_threat: totalInfected > 0 ? "Ancaman Siber (Agregat Nasional)" : "Sistem Terpantau Bersih",
@@ -111,7 +108,6 @@ export default function IndonesiaMap({ filter, apiData }: IndonesiaMapProps) {
             <div>
               <span className="text-gray-500 block text-[10px]">Indeks Wilayah</span>
               <span className="font-bold text-gray-900 text-sm">
-                {/* Langsung gunakan skor asli dari backend tanpa dimanipulasi */}
                 {displayData.score}/100
               </span>
             </div>
@@ -139,7 +135,6 @@ export default function IndonesiaMap({ filter, apiData }: IndonesiaMapProps) {
         </div>
       </div>
 
-      {/* Tambahkan event onClick ke kontainer SVG agar klik di area kosong me-reset peta ke Nasional */}
       <div 
         className="w-full relative border border-gray-300/70 rounded-2xl bg-white/60 p-2 md:p-6 shadow-inner overflow-hidden cursor-default"
         onClick={() => setSelectedRegionId(null)}
