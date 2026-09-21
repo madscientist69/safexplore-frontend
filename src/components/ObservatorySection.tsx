@@ -14,20 +14,21 @@ export default function ObservatorySection({ refreshTrigger = 0 }: ObservatoryPr
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+useEffect(() => {
     const fetchObservatoryData = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/observatory`);
+        setLoading(true); // Memunculkan efek loading sesaat ketika pindah filter
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/observatory?filter=${filter}`);
         const data = await response.json();
         setStats(data);
-        setLoading(false);
       } catch (error) {
         console.error("Gagal terhubung ke database backend", error);
+      } finally {
         setLoading(false);
       }
     };
     fetchObservatoryData();
-  }, [refreshTrigger]); // Fetch dipicu ulang jika angka refreshTrigger bertambah
+  }, [refreshTrigger, filter]); 
 
   return (
     <section
@@ -56,11 +57,11 @@ export default function ObservatorySection({ refreshTrigger = 0 }: ObservatoryPr
 
         {loading ? (
           <div className="mt-10 p-6 w-full max-w-3xl bg-white/80 rounded-2xl font-mono text-gray-500 animate-pulse border-2 border-[#f15a24] shadow-lg">
-            Mengambil data intelijen ancaman dari server nasional...
+            Mengambil data intelijen ancaman dari database pindai nasional...
           </div>
         ) : !stats ? (
           <div className="mt-10 p-6 w-full max-w-3xl bg-red-50 text-red-600 rounded-2xl font-mono text-sm border-2 border-red-200 shadow-lg">
-            Gagal terhubung ke pusat data. Pastikan Backend Python beroperasi di port 8000.
+            Gagal terhubung ke pusat data.
           </div>
         ) : (
           <>
