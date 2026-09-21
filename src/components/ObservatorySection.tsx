@@ -17,7 +17,6 @@ export default function ObservatorySection({ refreshTrigger = 0 }: ObservatoryPr
 useEffect(() => {
     const fetchObservatoryData = async () => {
       try {
-        setLoading(true); // Memunculkan efek loading sesaat ketika pindah filter
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/observatory?filter=${filter}`);
         const data = await response.json();
         setStats(data);
@@ -28,7 +27,7 @@ useEffect(() => {
       }
     };
     fetchObservatoryData();
-  }, [refreshTrigger, filter]); 
+  }, [refreshTrigger, filter]);
 
   return (
     <section
