@@ -57,7 +57,8 @@ export default function IndonesiaMap({ filter, apiData }: IndonesiaMapProps) {
   const getRegionColor = (regionId: keyof typeof MAPPING, isHovered: boolean) => {
     const stats = getRegionData(MAPPING[regionId].backendKey);
     if (stats.score < 60) return isHovered ? "#b91c1c" : "#dc2626";
-    if (stats.score < 80) return isHovered ? "#d97706" : "#f59e0b";
+    // Logika kuning: Jika skor < 80 ATAU ada minimal 1 infeksi
+    if (stats.score < 80 || stats.infected > 0) return isHovered ? "#d97706" : "#f59e0b";
     return isHovered ? "#15803d" : "#22c55e";
   };
 

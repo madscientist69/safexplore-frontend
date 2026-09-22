@@ -135,7 +135,7 @@ export default function ObservatorySection({ refreshTrigger = 0 }: ObservatoryPr
 
             {/* Interactive Map */}
             <div className="w-full mt-6">
-              <IndonesiaMap filter={filter} apiData={stats.regions} />
+              <IndonesiaMap filter={filter} apiData={stats} />
             </div>
 
             {/* Filter Pills */}
