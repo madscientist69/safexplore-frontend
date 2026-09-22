@@ -14,10 +14,21 @@ export default function ObservatorySection({ refreshTrigger = 0 }: ObservatoryPr
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
+  useEffect(() => {
     const fetchObservatoryData = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/observatory?filter=${filter}`);
+        // Trik Anti-Cache: Menambahkan timestamp (Waktu saat ini) agar URL selalu dianggap baru oleh Next.js
+        const timestamp = Date.now();
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/observatory?filter=${filter}&t=${timestamp}`;
+        
+        const response = await fetch(url, {
+          cache: "no-store", // Paksa browser agar tidak menyimpan cache
+          headers: {
+            "Pragma": "no-cache",
+            "Cache-Control": "no-cache"
+          }
+        });
+        
         const data = await response.json();
         setStats(data);
       } catch (error) {
@@ -27,7 +38,7 @@ useEffect(() => {
       }
     };
     fetchObservatoryData();
-  }, [refreshTrigger, filter]);
+  }, [refreshTrigger, filter]); // Wajib menyertakan 'filter' agar efek berubah saat diklik
 
   return (
     <section
