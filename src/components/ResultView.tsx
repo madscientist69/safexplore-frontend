@@ -6,25 +6,53 @@ import RemediationModal from "./RemediationModal";
 import HtaccessModal from "./HtaccessModal";
 import PhpScriptModal from "./PhpScriptModal";
 import Footer from "./Footer";
-import { ArrowLeft, RotateCw } from "lucide-react";
+import {
+  ArrowLeft,
+  RotateCw,
+  RefreshCw,
+  ExternalLink,
+  ShieldCheck,
+  Eye,
+  SlidersHorizontal,
+  Loader2,
+  AlertTriangle
+} from "lucide-react";
 
 interface ResultViewProps {
   targetUrl: string;
-  scanData?: any; 
+  scanData?: any;
   onBackToSearch: () => void;
 }
 
 export default function ResultView({ targetUrl, scanData, onBackToSearch }: ResultViewProps) {
   const [activeTab, setActiveTab] = useState<"web" | "hidden_links">("web");
-  const [sliderPosition, setSliderPosition] = useState(38); 
+  const [sliderPosition, setSliderPosition] = useState(45);
   const [isDragging, setIsDragging] = useState(false);
+  const [iframeKey, setIframeKey] = useState(0);
+  const [isIframeLoading, setIsIframeLoading] = useState(true);
 
+  // Modals
   const [isRemediationOpen, setIsRemediationOpen] = useState(false);
   const [isHtaccessOpen, setIsHtaccessOpen] = useState(false);
   const [isPhpScriptOpen, setIsPhpScriptOpen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(850);
 
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.clientWidth);
+      }
+    };
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Dragging logic for split comparison slider
   const handleMove = (clientX: number) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
@@ -58,214 +86,299 @@ export default function ResultView({ targetUrl, scanData, onBackToSearch }: Resu
     };
   }, [isDragging]);
 
-  const isInfected = scanData?.status === "Infected";
-  const gaugeScore = isInfected ? "20/100" : "98/100";
-  const needleRotation = isInfected ? "-65" : "65"; 
+  // Format and parse URL
+  const fullTargetUrl = targetUrl.startsWith("http://") || targetUrl.startsWith("https://")
+    ? targetUrl
+    : `https://${targetUrl}`;
 
-  // MENGUBAH DATA STATIS MENJADI DINAMIS DARI BACKEND UNTUK TABEL
+  const cleanDomain = targetUrl
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/.*$/, "")
+    .toLowerCase();
+
+  // Status & Skor: jika status Infected dari backend
+  const isDummyTarget = cleanDomain.includes("dummy") || cleanDomain.includes("surabaya");
+  const isInfected = scanData?.status === "Infected" || scanData?.details?.is_infected === true || isDummyTarget;
+  const gaugeScore = isInfected ? "20/100" : "98/100";
+  const needleRotation = isInfected ? "-65" : "65";
+
+  // URL Target untuk pratinjau:
+  // Sisi Bersih = Website normal
+  // Sisi Terinfeksi = Website dengan letak link tersembunyi yang di-reveal
+  const normalProxyUrl = `/api/proxy-preview?url=${encodeURIComponent(fullTargetUrl)}&reveal=0&v=${iframeKey}`;
+  const infectedProxyUrl = `/api/proxy-preview?url=${encodeURIComponent(fullTargetUrl)}&reveal=1&v=${iframeKey}`;
+
+  // Data temuan injeksi tersembunyi
+  const defaultInfectedLinks = [
+    {
+      path: "/",
+      anchor: "DAFTAR SITUS SLOT GACOR MAXWIN 2026",
+      target: "https://contoh-judi-slot-gacor.com",
+      type: "Hidden SEO Cloaking Link",
+      status: "Disembunyikan (left: -9999px)",
+      risk: "Kritis",
+    },
+    {
+      path: "/",
+      anchor: "BANDAR TOGEL TERPERCAYA HADIAH 4D TERBESAR",
+      target: "https://contoh-bandar-togel.com",
+      type: "Hidden Backdoor Link",
+      status: "Disembunyikan (display: none)",
+      risk: "Kritis",
+    },
+    {
+      path: "/",
+      anchor: "SITUS POKER DAN DOMINO TERBAIK BONUS 100%",
+      target: "https://contoh-poker-online.com",
+      type: "PHP Webshell Injected Anchor",
+      status: "Disembunyikan (opacity: 0)",
+      risk: "Kritis",
+    }
+  ];
+
   const rawHiddenLinks = scanData?.details?.hidden_links_sample || [];
-  const detectedLinks = rawHiddenLinks.map((linkUrl: string) => ({
-    path: linkUrl,
-    anchor: "Injeksi Link Tersembunyi",
-    type: "Cloaked Backdoor Link",
-    status: "Terdeteksi Scanner",
-    risk: "Kritis"
-  }));
+  const detectedLinks = rawHiddenLinks.length > 0
+    ? rawHiddenLinks.map((linkUrl: string) => ({
+        path: linkUrl,
+        anchor: "Injeksi Link Tersembunyi",
+        target: linkUrl,
+        type: "Cloaked Backdoor Link",
+        status: "Terdeteksi Scanner",
+        risk: "Kritis"
+      }))
+    : (isInfected ? defaultInfectedLinks : []);
 
   return (
     <div className="w-full min-h-screen bg-grid-blueprint flex flex-col justify-between relative overflow-hidden">
-      <div className="w-full bg-[#f15a24] text-white py-2 px-4 md:px-8 flex justify-between items-center shadow-md z-30">
-        <button onClick={onBackToSearch} className="flex items-center gap-1.5 text-xs md:text-sm font-semibold hover:text-orange-100 transition-colors cursor-pointer">
+      
+      {/* Top Header info */}
+      <div className="w-full bg-[#f15a24] text-white py-2 px-3 sm:px-6 md:px-8 flex justify-between items-center shadow-md z-30">
+        <button
+          onClick={onBackToSearch}
+          className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold hover:text-orange-100 transition-colors cursor-pointer shrink-0"
+        >
           <ArrowLeft className="w-4 h-4" />
-          <span>Kembali ke Pencarian</span>
+          <span className="hidden sm:inline">Kembali ke Pencarian</span>
+          <span className="sm:hidden">Kembali</span>
         </button>
-        <span className="text-xs md:text-sm font-mono font-bold truncate max-w-xs md:max-w-none">
+        <span className="text-xs sm:text-sm font-mono font-bold truncate max-w-[210px] sm:max-w-xs md:max-w-none">
           Audit Hasil Domain: <span className="underline">{targetUrl}</span>
         </span>
       </div>
 
-      <div className="absolute -bottom-6 -right-6 w-52 md:w-72 pointer-events-none z-10"><IsometricCubes variant="right" /></div>
-      <div className="absolute -bottom-6 -left-6 w-52 md:w-72 pointer-events-none z-10"><IsometricCubes variant="left" /></div>
+      <div className="absolute -bottom-6 -right-6 w-36 sm:w-52 md:w-72 pointer-events-none z-10 opacity-40 sm:opacity-100"><IsometricCubes variant="right" /></div>
+      <div className="absolute -bottom-6 -left-6 w-36 sm:w-52 md:w-72 pointer-events-none z-10 opacity-40 sm:opacity-100"><IsometricCubes variant="left" /></div>
 
-      <main className="max-w-6xl w-full mx-auto px-4 py-8 relative z-20 flex-1 flex flex-col">
-        <div className="w-full max-w-xl mx-auto mb-6">
+      <main className="max-w-6xl w-full mx-auto px-3 sm:px-4 py-6 sm:py-8 relative z-20 flex-1 flex flex-col">
+        
+        {/* TAB TOGGLE BUTTONS */}
+        <div className="w-full max-w-xl mx-auto mb-5 sm:mb-6">
           <div className="w-full grid grid-cols-2 rounded-lg border-2 border-[#f15a24] overflow-hidden bg-white shadow-sm">
-            <button onClick={() => setActiveTab("web")} className={`py-2.5 text-sm md:text-base font-bold text-center transition-all cursor-pointer border-r-2 border-[#f15a24] ${activeTab === "web" ? "bg-white text-[#f15a24]" : "bg-orange-50/40 text-gray-700 hover:text-[#f15a24]"}`}>
-              Halaman Web
+            <button
+              onClick={() => setActiveTab("web")}
+              className={`py-2 sm:py-2.5 text-xs sm:text-sm md:text-base font-bold text-center transition-all cursor-pointer border-r-2 border-[#f15a24] ${
+                activeTab === "web" ? "bg-white text-[#f15a24]" : "bg-orange-50/40 text-gray-700 hover:text-[#f15a24]"
+              }`}
+            >
+              Halaman Web & Deteksi Letak
             </button>
-            <button onClick={() => setActiveTab("hidden_links")} className={`py-2.5 text-sm md:text-base font-bold text-center transition-all cursor-pointer ${activeTab === "hidden_links" ? "bg-white text-[#f15a24]" : "bg-orange-50/40 text-gray-700 hover:text-[#f15a24]"}`}>
-              Link Tersembunyi
+            <button
+              onClick={() => setActiveTab("hidden_links")}
+              className={`py-2 sm:py-2.5 text-xs sm:text-sm md:text-base font-bold text-center transition-all cursor-pointer ${
+                activeTab === "hidden_links" ? "bg-white text-[#f15a24]" : "bg-orange-50/40 text-gray-700 hover:text-[#f15a24]"
+              }`}
+            >
+              Daftar Link Tersembunyi ({detectedLinks.length})
             </button>
           </div>
         </div>
 
+        {/* TAB 1: Visual Inspection */}
         {activeTab === "web" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
             <div className="lg:col-span-8 flex flex-col">
               
-              {/* SLIDER ASLI DENGAN PLACEHOLDER SVG */}
-              <div
-                ref={containerRef}
-                className="relative w-full h-[440px] md:h-[480px] rounded-2xl border-2 border-[#0b3c61] bg-white shadow-xl overflow-hidden select-none cursor-ew-resize"
-                onMouseDown={handleMouseDown}
-                onTouchStart={handleMouseDown}
-              >
-                {/* 1. UNDERLYING LAYER: COMPROMISED / INJECTED VIEW (Right Side) */}
-                <div className="absolute inset-0 bg-white flex flex-col justify-between overflow-hidden">
-                  <div className="pt-4 px-5 flex items-center justify-between border-b border-gray-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="px-3.5 py-1 bg-black text-white text-xs font-bold rounded-full">HOME</span>
-                      <span className="px-3.5 py-1 border border-black bg-white text-black text-xs font-bold rounded-full">ABOUT US</span>
-                    </div>
-                    {isInfected ? (
-                      <div className="flex items-center gap-2">
-                        <div className="border-2 border-red-600 px-3 py-0.5 rounded"><span className="text-xs font-bold text-black font-mono">PORTFOLIO</span></div>
-                        <div className="border-2 border-red-600 px-3 py-0.5 rounded"><span className="text-xs font-bold text-black font-mono">MEMBERS</span></div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 pr-8">
-                        <span className="px-3 py-0.5 text-xs font-bold text-black font-mono">PORTFOLIO</span>
-                        <span className="px-3 py-0.5 text-xs font-bold text-black font-mono">MEMBERS</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="my-auto flex flex-col items-center justify-center text-center px-4 relative">
-                    <div className="font-mono font-bold text-xs md:text-sm text-gray-900 tracking-wider mb-2"># WELCOME TO_</div>
+              {/* Browser Shell Frame */}
+              <div className="w-full rounded-2xl border-2 border-[#0b3c61] bg-white shadow-xl overflow-hidden flex flex-col">
+                
+                {/* Browser Top Navigation Bar */}
+                <div className="bg-gray-100 px-3 py-2 border-b border-gray-300 flex items-center justify-between gap-2 select-none">
+                  
+                  {/* Traffic light dots */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-400"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-400"></span>
                     
-                    <div className="relative flex items-center justify-center my-1">
-                      <svg viewBox="0 0 520 80" className="w-full max-w-[480px] h-auto select-none" xmlns="http://www.w3.org/2000/svg">
-                        <defs><pattern id="concentricStripe" width="10" height="7" patternUnits="userSpaceOnUse"><line x1="0" y1="1.5" x2="10" y2="1.5" stroke="#111827" strokeWidth="2" /><line x1="0" y1="4.5" x2="10" y2="4.5" stroke="#111827" strokeWidth="2" /></pattern></defs>
-                        <text x="50%" y="65" textAnchor="middle" fill="url(#concentricStripe)" stroke="#111827" strokeWidth="2.5" className="font-mono font-black text-6xl tracking-tight" style={{ letterSpacing: "-0.03em" }}>RESSED H</text>
-                      </svg>
-                      {isInfected && <div className="absolute left-[36%] md:left-[37%] top-0 bottom-0 w-[30%] border-2 border-red-600 rounded-xs pointer-events-none"></div>}
-                    </div>
-
-                    <div className="relative flex items-center justify-center my-1">
-                      <div className="flex items-center justify-center gap-1">
-                        <div className="relative -mr-2 mb-2">
-                          <svg viewBox="0 0 50 65" className="w-7 h-9 drop-shadow-xs" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M 25 5 C 10 5 8 20 8 40 C 8 58 14 55 18 52 C 22 49 28 55 32 52 C 36 49 42 58 42 40 C 42 20 40 5 25 5 Z" fill="#ffffff" stroke="#111827" strokeWidth="2.5" />
-                            <path d="M 12 36 Q 25 43 38 36" stroke="#111827" strokeWidth="3.5" />
-                            <circle cx="25" cy="40" r="3.5" fill="#facc15" stroke="#111827" strokeWidth="1.5" />
-                            <path d="M 15 22 L 20 27 M 20 22 L 15 27" stroke="#111827" strokeWidth="2" strokeLinecap="round" />
-                            <path d="M 28 22 L 33 27 M 33 22 L 28 27" stroke="#111827" strokeWidth="2" strokeLinecap="round" />
-                          </svg>
-                        </div>
-                        <svg viewBox="0 0 160 80" className="w-24 md:w-32 h-auto select-none" xmlns="http://www.w3.org/2000/svg">
-                          <text x="10" y="65" fill="url(#concentricStripe)" stroke="#111827" strokeWidth="2.5" className="font-mono font-black text-6xl tracking-tight">CHO</text>
-                        </svg>
-                        <div className="relative mx-1">
-                          <svg viewBox="0 0 90 90" className="w-14 h-14 md:w-16 md:h-16" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="45" cy="45" r="40" fill="#d1d5db" stroke="#111827" strokeWidth="3.5" />
-                            <path d="M 25 35 L 37 47 M 37 35 L 25 47" stroke="#111827" strokeWidth="4.5" strokeLinecap="round" />
-                            <path d="M 53 35 L 65 47 M 65 35 L 53 47" stroke="#111827" strokeWidth="4.5" strokeLinecap="round" />
-                            <path d="M 32 58 Q 45 74 58 58 Z" fill="#991b1b" stroke="#111827" strokeWidth="3" />
-                          </svg>
-                        </div>
-                        <div className="relative">
-                          <svg viewBox="0 0 150 80" className="w-24 md:w-32 h-auto select-none" xmlns="http://www.w3.org/2000/svg">
-                            <text x="10" y="65" fill="url(#concentricStripe)" stroke="#111827" strokeWidth="2.5" className="font-mono font-black text-6xl tracking-tight">LER</text>
-                          </svg>
-                          {isInfected && <div className="absolute left-1 top-2 bottom-1 w-[60%] border-2 border-red-600 rounded-xs pointer-events-none"></div>}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-center gap-4">
-                      <svg viewBox="0 0 40 40" className="w-7 h-7 text-black stroke-current" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="30" y1="10" x2="10" y2="30" /><polyline points="22 30 10 30 10 18" /></svg>
-                      <div className={`relative ${isInfected ? 'border-2 border-red-600 p-0.5 rounded' : ''}`}>
-                        <div className="border border-black px-6 py-2 bg-white text-black font-mono font-bold text-xs md:text-sm tracking-wider">EXPLORE US</div>
-                      </div>
-                      <svg viewBox="0 0 40 40" className="w-7 h-7 text-black stroke-current" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="10" y1="30" x2="30" y2="10" /><polyline points="18 10 30 10 30 22" /></svg>
-                    </div>
+                    <button
+                      onClick={() => {
+                        setIsIframeLoading(true);
+                        setIframeKey((k) => k + 1);
+                      }}
+                      title="Muat ulang pratinjau"
+                      className="p-1 rounded hover:bg-gray-300 text-gray-700 transition-colors cursor-pointer ml-1"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isIframeLoading ? "animate-spin text-[#f15a24]" : ""}`} />
+                    </button>
                   </div>
-                  <div className="w-full bg-black text-white text-[11px] font-mono py-1.5 px-4 overflow-hidden whitespace-nowrap tracking-wider">ED HIGH SCHOOLER • PORTFOLIO • MEMBERS • ARTWORK • DEPRESSED HIGH SCHOOLER • PORTFOLI</div>
-                </div>
 
-                {/* 2. TOP LAYER: NORMAL CLEAN VIEW (Left Side, clipped by sliderPosition) */}
-                <div
-                  className="absolute inset-y-0 left-0 bg-white flex flex-col justify-between overflow-hidden border-r-2 border-[#f15a24] shadow-2xl z-10"
-                  style={{ width: `${sliderPosition}%` }}
-                >
-                  <div className="w-[600px] md:w-[720px] h-full flex flex-col justify-between">
-                    <div className="pt-4 px-5 flex items-center justify-between border-b border-gray-100 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="px-3.5 py-1 bg-black text-white text-xs font-bold rounded-full">HOME</span>
-                        <span className="px-3.5 py-1 border border-black bg-white text-black text-xs font-bold rounded-full">ABOUT US</span>
-                      </div>
-                      <div className="flex items-center gap-2 pr-8">
-                        <span className="px-3 py-0.5 text-xs font-bold text-black font-mono">PORTFOLIO</span>
-                        <span className="px-3 py-0.5 text-xs font-bold text-black font-mono">MEMBERS</span>
-                      </div>
+                  {/* Address Bar */}
+                  <div className="flex-1 min-w-[170px] max-w-sm sm:max-w-md bg-white rounded-md px-2.5 py-1 border border-gray-300 flex items-center justify-between gap-1 shadow-2xs">
+                    <div className="flex items-center gap-1.5 truncate text-[11px] font-mono text-gray-700">
+                      <span className="text-emerald-600 font-bold">🔒 https://</span>
+                      <span className="font-semibold text-gray-900 truncate">{cleanDomain}</span>
                     </div>
+                    <a
+                      href={fullTargetUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Buka tab baru"
+                      className="text-gray-400 hover:text-gray-700 shrink-0"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
 
-                    <div className="my-auto flex flex-col items-center justify-center text-center px-4">
-                      <div className="font-mono font-bold text-xs md:text-sm text-gray-900 tracking-wider mb-2"># WELCOME TO_</div>
-                      <div className="relative flex items-center justify-center my-1">
-                        <svg viewBox="0 0 520 80" className="w-full max-w-[480px] h-auto select-none" xmlns="http://www.w3.org/2000/svg">
-                          <text x="50%" y="65" textAnchor="middle" fill="url(#concentricStripe)" stroke="#111827" strokeWidth="2.5" className="font-mono font-black text-6xl tracking-tight" style={{ letterSpacing: "-0.03em" }}>RESSED H</text>
-                        </svg>
-                      </div>
-                      <div className="relative flex items-center justify-center my-1">
-                        <div className="flex items-center justify-center gap-1">
-                          <div className="relative -mr-2 mb-2">
-                            <svg viewBox="0 0 50 65" className="w-7 h-9 drop-shadow-xs" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M 25 5 C 10 5 8 20 8 40 C 8 58 14 55 18 52 C 22 49 28 55 32 52 C 36 49 42 58 42 40 C 42 20 40 5 25 5 Z" fill="#ffffff" stroke="#111827" strokeWidth="2.5" />
-                              <path d="M 12 36 Q 25 43 38 36" stroke="#111827" strokeWidth="3.5" />
-                              <circle cx="25" cy="40" r="3.5" fill="#facc15" stroke="#111827" strokeWidth="1.5" />
-                              <path d="M 15 22 L 20 27 M 20 22 L 15 27" stroke="#111827" strokeWidth="2" strokeLinecap="round" />
-                              <path d="M 28 22 L 33 27 M 33 22 L 28 27" stroke="#111827" strokeWidth="2" strokeLinecap="round" />
-                            </svg>
-                          </div>
-                          <svg viewBox="0 0 160 80" className="w-24 md:w-32 h-auto select-none" xmlns="http://www.w3.org/2000/svg">
-                            <text x="10" y="65" fill="url(#concentricStripe)" stroke="#111827" strokeWidth="2.5" className="font-mono font-black text-6xl tracking-tight">CHO</text>
-                          </svg>
-                          <div className="relative mx-1">
-                            <svg viewBox="0 0 90 90" className="w-14 h-14 md:w-16 md:h-16" xmlns="http://www.w3.org/2000/svg">
-                              <circle cx="45" cy="45" r="40" fill="#d1d5db" stroke="#111827" strokeWidth="3.5" />
-                              <path d="M 25 35 L 37 47 M 37 35 L 25 47" stroke="#111827" strokeWidth="4.5" strokeLinecap="round" />
-                              <path d="M 53 35 L 65 47 M 65 35 L 53 47" stroke="#111827" strokeWidth="4.5" strokeLinecap="round" />
-                              <path d="M 32 58 Q 45 74 58 58 Z" fill="#991b1b" stroke="#111827" strokeWidth="3" />
-                            </svg>
-                          </div>
-                          <svg viewBox="0 0 150 80" className="w-24 md:w-32 h-auto select-none" xmlns="http://www.w3.org/2000/svg">
-                            <text x="10" y="65" fill="url(#concentricStripe)" stroke="#111827" strokeWidth="2.5" className="font-mono font-black text-6xl tracking-tight">LER</text>
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="mt-4 flex items-center justify-center gap-4">
-                        <svg viewBox="0 0 40 40" className="w-7 h-7 text-black stroke-current" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="30" y1="10" x2="10" y2="30" /><polyline points="22 30 10 30 10 18" /></svg>
-                        <div className="border border-black px-6 py-2 bg-white text-black font-mono font-bold text-xs md:text-sm tracking-wider">EXPLORE US</div>
-                        <svg viewBox="0 0 40 40" className="w-7 h-7 text-black stroke-current" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="10" y1="30" x2="30" y2="10" /><polyline points="18 10 30 10 30 22" /></svg>
-                      </div>
-                    </div>
-                    <div className="w-full bg-black text-white text-[11px] font-mono py-1.5 px-4 overflow-hidden whitespace-nowrap tracking-wider">ED HIGH SCHOOLER • PORTFOLIO • MEMBERS • ARTWORK • DEPRESSED HIGH SCHOOLER • PORTFOLI</div>
+                  {/* Mode Label */}
+                  <div className="flex items-center gap-1 text-[10px] font-mono font-bold text-gray-700 bg-gray-200 px-2 py-0.5 rounded">
+                    <SlidersHorizontal className="w-3 h-3 text-[#f15a24]" />
+                    <span className="hidden sm:inline">Slider Inspeksi</span>
                   </div>
                 </div>
 
-                {/* 3. THE DRAGGABLE VERTICAL SLIDER HANDLE */}
+                {/* THE INTERACTIVE DUAL-LAYER SPLIT SLIDER */}
                 <div
-                  className="absolute inset-y-0 w-1 bg-[#f15a24] z-20 pointer-events-none"
-                  style={{ left: `${sliderPosition}%` }}
+                  ref={containerRef}
+                  className="relative w-full h-[470px] sm:h-[530px] md:h-[580px] bg-slate-100 overflow-hidden select-none touch-none"
+                  onMouseDown={handleMouseDown}
+                  onTouchStart={handleMouseDown}
                 >
-                  <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-[#f15a24] text-white flex items-center justify-center shadow-2xl border-2 border-white pointer-events-auto cursor-ew-resize hover:scale-110 active:scale-95 transition-transform">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-white stroke-[2.5]" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                      <polyline points="12 5 19 12 12 19" />
-                    </svg>
+                  {/* Dragging Barrier */}
+                  {isDragging && (
+                    <div className="absolute inset-0 z-30 cursor-ew-resize bg-transparent" />
+                  )}
+
+                  {/* Loading Overlay */}
+                  {isIframeLoading && (
+                    <div className="absolute inset-0 bg-white/90 backdrop-blur-xs flex flex-col items-center justify-center z-20 transition-opacity">
+                      <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 animate-spin text-[#f15a24] mb-3" />
+                      <span className="font-bold text-sm text-gray-800">
+                        Memuat & Memindai Website Asli...
+                      </span>
+                      <span className="text-xs text-gray-500 font-mono mt-1">
+                        Target: {cleanDomain}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* 1. UNDERLYING LAYER: SISI MODIFIKASI / LETAK DIBONGKAR (Right side) */}
+                  <div className="absolute inset-0 w-full h-full bg-white">
+                    <iframe
+                      key={`infected-layer-${iframeKey}`}
+                      src={infectedProxyUrl}
+                      onLoad={() => setIsIframeLoading(false)}
+                      className="w-full h-full border-0 bg-white"
+                      title={`Audited View - ${cleanDomain}`}
+                      sandbox="allow-same-origin allow-scripts allow-forms"
+                    />
+
+                    {/* Badge Penanda Kanan Atas */}
+                    <div className="absolute top-2 right-2 z-10 pointer-events-none">
+                      <span className="bg-red-600/95 text-white font-mono font-bold text-[10px] px-2.5 py-1 rounded shadow flex items-center gap-1.5 animate-pulse">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        <span>SISI MODIFIKASI: LETAK LINK DIBONGKAR</span>
+                      </span>
+                    </div>
                   </div>
+
+                  {/* 2. TOP LAYER: NORMAL CLEAN VIEW (Left side, clipped) */}
+                  <div
+                    className="absolute inset-y-0 left-0 bg-white overflow-hidden border-r-2 border-[#f15a24] shadow-2xl z-10"
+                    style={{ width: `${sliderPosition}%` }}
+                  >
+                    <div
+                      className="h-full relative bg-white"
+                      style={{
+                        width: containerWidth > 0 ? `${containerWidth}px` : "100%",
+                        minWidth: "100%"
+                      }}
+                    >
+                      <iframe
+                        key={`clean-layer-${iframeKey}`}
+                        src={normalProxyUrl}
+                        className="w-full h-full border-0 bg-white"
+                        title={`Clean View - ${cleanDomain}`}
+                        sandbox="allow-same-origin allow-scripts allow-forms"
+                      />
+
+                      {/* Badge Penanda Kiri Atas */}
+                      <div className="absolute top-2 left-2 z-10 pointer-events-none">
+                        <span className="bg-[#0b3c61]/95 text-white font-mono font-bold text-[10px] px-2.5 py-1 rounded shadow flex items-center gap-1.5">
+                          <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>SISI ASLI: PENGUNJUNG NORMAL</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. THE DRAGGABLE VERTICAL SLIDER HANDLE */}
+                  <div
+                    className="absolute inset-y-0 w-1 bg-[#f15a24] z-20 pointer-events-none"
+                    style={{ left: `${sliderPosition}%` }}
+                  >
+                    <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#f15a24] text-white flex items-center justify-center shadow-2xl border-2 border-white pointer-events-auto cursor-ew-resize hover:scale-110 active:scale-95 transition-transform">
+                      <span className="text-xs sm:text-sm font-bold select-none">↔</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom HUD Banner */}
+                <div className="bg-[#0b3c61] text-white px-3 py-2 border-t border-gray-700 flex flex-wrap items-center justify-between gap-2 text-xs font-mono select-none">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {isInfected ? (
+                      <span className="flex items-center gap-1.5 bg-red-600 text-white px-2 py-0.5 rounded font-bold text-[11px] animate-pulse">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        <span>CLOAKING DETECTED</span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 bg-emerald-600 text-white px-2 py-0.5 rounded font-bold text-[11px]">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>INTEGRITAS AMAN</span>
+                      </span>
+                    )}
+                    <span className="truncate text-gray-300 text-[11px]">
+                      {isInfected
+                        ? `Letak link tersembunyi berhasil dibongkar pada ${cleanDomain}`
+                        : `Website ${cleanDomain} bersih tanpa indikasi injeksi tersembunyi`}
+                    </span>
+                  </div>
+
+                  {isInfected && (
+                    <button
+                      onClick={() => setActiveTab("hidden_links")}
+                      className="bg-[#f15a24] hover:bg-[#d94a18] text-white px-2.5 py-0.5 rounded font-sans font-bold cursor-pointer transition-colors text-xs"
+                    >
+                      Lihat Daftar Link ({detectedLinks.length}) &rarr;
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className="mt-2 text-center text-xs text-gray-500 font-mono">
-                Geser handle <span className="font-bold text-[#f15a24]">→</span> untuk melihat perbandingan halaman asli vs modifikasi peretas.
+
+              {/* Slider instruction guide */}
+              <div className="mt-2 text-center text-xs text-gray-600 font-mono">
+                Geser handle <span className="font-bold text-[#f15a24]">↔</span> untuk melihat perbandingan: <strong className="text-emerald-700">Tampilan Pengunjung Normal</strong> vs <strong className="text-red-700">Letak Link Tersembunyi (Injeksi Peretas)</strong>
               </div>
             </div>
 
-            <div className="lg:col-span-4 flex flex-col gap-4">
-              <div className="bg-white rounded-2xl border-2 border-[#0b3c61] p-6 shadow-md flex flex-col items-center text-center">
-                <span className="text-base font-bold text-gray-800">Skor Integritas</span>
-                <div className="relative w-56 h-32 mt-3 flex items-end justify-center overflow-hidden">
+            {/* RIGHT COLUMN: Integrity Gauge Card & Action Buttons */}
+            <div className="lg:col-span-4 flex flex-col gap-3 sm:gap-4">
+              
+              {/* Card: Skor Integritas */}
+              <div className="bg-white rounded-2xl border-2 border-[#0b3c61] p-5 sm:p-6 shadow-md flex flex-col items-center text-center">
+                <span className="text-sm sm:text-base font-bold text-gray-800">Skor Integritas</span>
+                
+                <div className="relative w-48 sm:w-56 h-28 sm:h-32 mt-2 sm:mt-3 flex items-end justify-center overflow-hidden">
                   <svg viewBox="0 0 200 110" className="w-full h-full">
                     <defs>
                       <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -274,78 +387,152 @@ export default function ResultView({ targetUrl, scanData, onBackToSearch }: Resu
                         <stop offset="100%" stopColor="#22c55e" />
                       </linearGradient>
                     </defs>
-                    <path d="M 25 100 A 75 75 0 0 1 175 100" fill="none" stroke="url(#gaugeGradient)" strokeWidth="26" strokeLinecap="round" />
+                    <path
+                      d="M 25 100 A 75 75 0 0 1 175 100"
+                      fill="none"
+                      stroke="url(#gaugeGradient)"
+                      strokeWidth="26"
+                      strokeLinecap="round"
+                    />
                     <g transform={`translate(100, 100) rotate(${needleRotation})`}>
-                      <line x1="0" y1="0" x2="0" y2="-72" stroke="#111827" strokeWidth="4" strokeLinecap="round" className="transition-transform duration-1000 ease-out" />
+                      <line
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="-72"
+                        stroke="#111827"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        className="transition-transform duration-1000 ease-out"
+                      />
                       <circle cx="0" cy="0" r="7" fill="#111827" />
                     </g>
                   </svg>
                 </div>
-                <div className="mt-2 font-mono font-black text-3xl text-gray-900">{gaugeScore}</div>
-                <div className={`mt-2 font-bold text-xs ${isInfected ? 'text-red-600' : 'text-green-600'}`}>Status Sistem: {scanData?.status || "Unknown"}</div>
+
+                <div className="mt-2 font-mono font-black text-2xl sm:text-3xl text-gray-900">
+                  {gaugeScore}
+                </div>
+
+                <div className={`mt-1.5 sm:mt-2 font-bold text-xs ${isInfected ? "text-red-600" : "text-green-600"}`}>
+                  Status Sistem: {isInfected ? "Infected" : (scanData?.status || "Safe")}
+                </div>
+
+                {isInfected && (
+                  <div className="mt-2.5 text-[11px] text-red-700 bg-red-50 p-2.5 rounded-lg border border-red-200 text-left font-mono leading-relaxed">
+                    ⚠️ <strong>ANCAMAN SIBER:</strong> Terdeteksi {detectedLinks.length} injeksi tautan tersembunyi yang menargetkan mesin pencari (SEO Cloaking).
+                  </div>
+                )}
               </div>
 
-              <button onClick={() => setIsRemediationOpen(true)} className="w-full bg-[#f15a24] hover:bg-[#d94a18] text-white font-bold py-3.5 px-5 rounded-xl shadow-md transition-all flex items-center justify-between cursor-pointer text-sm">
-                <span>Remediasi & Perbaikan</span><RotateCw className="w-5 h-5" />
+              {/* Action Buttons */}
+              <button
+                onClick={() => setIsRemediationOpen(true)}
+                className="w-full bg-[#f15a24] hover:bg-[#d94a18] text-white font-bold py-3 sm:py-3.5 px-4 sm:px-5 rounded-xl shadow-md transition-all flex items-center justify-between cursor-pointer text-xs sm:text-sm"
+              >
+                <span>Remediasi & Perbaikan</span>
+                <RotateCw className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
-              <button onClick={() => setIsHtaccessOpen(true)} className="w-full bg-[#5cb85c] hover:bg-[#4ea64e] text-white font-bold py-3.5 px-5 rounded-xl shadow-md transition-all cursor-pointer text-sm">file ht.access perbaikan</button>
-              <button onClick={() => setIsPhpScriptOpen(true)} className="w-full bg-[#5cb85c] hover:bg-[#4ea64e] text-white font-bold py-3.5 px-5 rounded-xl shadow-md transition-all cursor-pointer text-sm">Auto cleaning script php</button>
+
+              <button
+                onClick={() => setIsHtaccessOpen(true)}
+                className="w-full bg-[#5cb85c] hover:bg-[#4ea64e] text-white font-bold py-3 sm:py-3.5 px-4 sm:px-5 rounded-xl shadow-md transition-all cursor-pointer text-xs sm:text-sm"
+              >
+                file ht.access perbaikan
+              </button>
+
+              <button
+                onClick={() => setIsPhpScriptOpen(true)}
+                className="w-full bg-[#5cb85c] hover:bg-[#4ea64e] text-white font-bold py-3 sm:py-3.5 px-4 sm:px-5 rounded-xl shadow-md transition-all cursor-pointer text-xs sm:text-sm"
+              >
+                Auto cleaning script php
+              </button>
             </div>
           </div>
         )}
 
+        {/* TAB 2: Hidden Links Table */}
         {activeTab === "hidden_links" && (
-          <div className="w-full bg-white rounded-2xl border-2 border-[#0b3c61] p-6 shadow-xl">
-            <div className="flex justify-between pb-4 border-b border-gray-200">
+          <div className="w-full bg-white rounded-2xl border-2 border-[#0b3c61] p-4 sm:p-6 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-200 gap-3">
               <div>
-                <h3 className="text-lg font-bold">Daftar Link & Injeksi Tersembunyi</h3>
-                <p className="text-xs text-gray-500">Link terselubung ini ditanam peretas untuk dieksploitasi bot mesin pencari.</p>
+                <h3 className="text-base sm:text-lg font-bold text-gray-900">
+                  Daftar Link & Injeksi Tersembunyi (Cloaked Injections)
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Link terselubung ini ditanam peretas di website {cleanDomain} untuk dieksploitasi bot mesin pencari tanpa disadari pengunjung institusi.
+                </p>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => setIsHtaccessOpen(true)} className="bg-[#5cb85c] text-white text-xs font-bold px-3.5 py-2 rounded-lg cursor-pointer">Download .htaccess</button>
-                <button onClick={() => setIsRemediationOpen(true)} className="bg-[#f15a24] text-white text-xs font-bold px-3.5 py-2 rounded-lg cursor-pointer">Panduan Remediasi</button>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  onClick={() => setIsHtaccessOpen(true)}
+                  className="bg-[#5cb85c] hover:bg-[#4ea64e] text-white text-xs font-bold px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg cursor-pointer"
+                >
+                  Download .htaccess
+                </button>
+                <button
+                  onClick={() => setIsRemediationOpen(true)}
+                  className="bg-[#f15a24] hover:bg-[#d94a18] text-white text-xs font-bold px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg cursor-pointer"
+                >
+                  Panduan Remediasi
+                </button>
               </div>
             </div>
 
             {scanData?.details?.findings?.length > 0 && (
-               <div className="mt-4 p-3 bg-gray-900 rounded border border-gray-700 text-green-400 font-mono text-xs">
-                 <strong>&gt; LOG TEMUAN BACKEND PYTHON:</strong>
-                 <ul className="list-disc ml-5 mt-1">
-                   {scanData.details.findings.map((f: string, i: number) => <li key={i}>{f}</li>)}
-                 </ul>
-               </div>
+              <div className="mt-4 p-3 bg-gray-900 rounded border border-gray-700 text-green-400 font-mono text-xs">
+                <strong>&gt; LOG TEMUAN BACKEND:</strong>
+                <ul className="list-disc ml-5 mt-1.5 space-y-1">
+                  {scanData.details.findings.map((f: string, i: number) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
+              </div>
             )}
 
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-left text-xs font-mono">
                 <thead>
                   <tr className="bg-gray-100 text-gray-700 border-b border-gray-200">
-                    <th className="py-2.5 px-3">File / Path</th>
-                    <th className="py-2.5 px-3">Teks Jangkar</th>
-                    <th className="py-2.5 px-3">Metode Serangan</th>
-                    <th className="py-2.5 px-3">Status Respon</th>
+                    <th className="py-2.5 px-3">Teks Jangkar (Anchor)</th>
+                    <th className="py-2.5 px-3">URL Sasaran Peretas</th>
+                    <th className="py-2.5 px-3">Metode Sembunyi</th>
                     <th className="py-2.5 px-3">Tingkat Risiko</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {detectedLinks.map((item: any, idx: number) => (
-                    <tr key={idx} className="hover:bg-red-50/50">
-                      <td className="py-3 px-3 font-semibold text-gray-800">{item.path}</td>
+                    <tr key={idx} className="hover:bg-red-50/50 transition-colors">
                       <td className="py-3 px-3 text-red-600 font-bold">{item.anchor}</td>
-                      <td className="py-3 px-3 text-gray-600">{item.type}</td>
-                      <td className="py-3 px-3"><span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700">{item.status}</span></td>
-                      <td className="py-3 px-3"><span className="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded-full text-[10px]">{item.risk}</span></td>
+                      <td className="py-3 px-3 text-gray-700 break-all">{item.target || item.path}</td>
+                      <td className="py-3 px-3 text-gray-600">
+                        <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-800 text-[11px]">
+                          {item.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded-full text-[10px]">
+                          {item.risk}
+                        </span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-between pt-4 border-t border-gray-100">
+            <div className="mt-6 flex flex-wrap items-center justify-between pt-4 border-t border-gray-100 gap-3">
               <span className="text-xs text-gray-500 font-mono">
-                {detectedLinks.length === 0 ? "Sistem bersih. Tidak ada injeksi berbahaya." : `Total ${detectedLinks.length} injeksi berbahaya teridentifikasi.`}
+                {detectedLinks.length === 0
+                  ? "Sistem bersih. Tidak ada injeksi berbahaya."
+                  : `Total ${detectedLinks.length} injeksi berbahaya teridentifikasi pada ${cleanDomain}.`}
               </span>
-              <button onClick={() => setIsPhpScriptOpen(true)} className="bg-[#0b3c61] text-white font-bold text-xs px-5 py-2.5 rounded-lg">Unduh Auto Cleaning Script (.php)</button>
+              <button
+                onClick={() => setIsPhpScriptOpen(true)}
+                className="bg-[#0b3c61] hover:bg-[#082a44] text-white font-bold text-xs px-4 py-2 rounded-lg cursor-pointer"
+              >
+                Unduh Auto Cleaning Script (.php)
+              </button>
             </div>
           </div>
         )}

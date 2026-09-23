@@ -4,16 +4,16 @@ import React from "react";
 
 export default function Footer() {
   return (
-    <footer className="relative w-full bg-white pt-10 pb-8 px-4 overflow-hidden border-t border-gray-200">
+    <footer className="relative w-full bg-white pt-8 sm:pt-10 pb-6 sm:pb-8 px-4 overflow-hidden border-t border-gray-200">
       
       {/* Background arch / curved hill backdrop */}
-      <div className="absolute inset-x-0 bottom-0 h-40 bg-[#f0f2f5] rounded-t-[100px] pointer-events-none -z-0"></div>
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-[#f0f2f5] rounded-t-[40px] sm:rounded-t-[70px] md:rounded-t-[100px] pointer-events-none -z-0"></div>
 
-      <div className="max-w-4xl mx-auto relative z-10 flex flex-col items-start">
+      <div className="max-w-4xl mx-auto relative z-10 flex flex-col items-start w-full">
         
         {/* Developer Contacts */}
-        <div className="text-left mb-6">
-          <div className="font-mono font-black text-sm md:text-base text-gray-900 tracking-wider">
+        <div className="text-left mb-4 sm:mb-6 w-full">
+          <div className="font-mono font-black text-xs sm:text-sm md:text-base text-gray-900 tracking-wider">
             CONTACT DEVELOPER :
           </div>
 
@@ -23,9 +23,9 @@ export default function Footer() {
               href="https://www.instagram.com/depressedhighschooler_official/"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2 text-xs md:text-sm font-bold text-gray-800 hover:text-[#f15a24] transition-colors font-mono"
+              className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-800 hover:text-[#f15a24] transition-colors font-mono break-all sm:break-normal"
             >
-              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-2 shrink-0" strokeLinecap="round" strokeLinejoin="round">
                 <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
                 <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
@@ -38,9 +38,9 @@ export default function Footer() {
               href="https://www.youtube.com/@DepressedHighSchooler"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2 text-xs md:text-sm font-bold text-gray-800 hover:text-[#f15a24] transition-colors font-mono"
+              className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-800 hover:text-[#f15a24] transition-colors font-mono break-all sm:break-normal"
             >
-              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-2 shrink-0" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
                 <path d="m10 15 5-3-5-3z" fill="currentColor" />
               </svg>

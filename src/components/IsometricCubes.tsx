@@ -13,60 +13,151 @@ export default function IsometricCubes({
   variant = "right",
   colorMode = "orange-blue",
 }: IsometricCubesProps) {
-  const strokeColor = colorMode === "orange-blue" ? "#f15a24" : "#0ea5e9";
-  const fillColorTop = "#0f4368";
-  const fillColorLeft = "#0a2e47";
-  const fillColorRight = "#072033";
+  // Exact design specs from Figma (Image 3):
+  // Fill: #064E7A
+  // Border: 3px solid #F2692E
+  const strokeColor = colorMode === "orange-blue" ? "#F2692E" : "#0ea5e9";
+  const fillColor = "#064E7A";
+  const strokeWidth = "3";
 
+  // Variant "left" (3 Stepped Cubes - Left Corner)
   if (variant === "left") {
     return (
       <div className={`pointer-events-none select-none ${className}`}>
         <svg
-          viewBox="0 0 240 200"
-          className="w-full h-auto drop-shadow-md"
+          viewBox="0 0 220 220"
+          className="w-full h-auto drop-shadow-lg"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Base Cube 1 */}
-          <g transform="translate(10, 80)">
-            <path d="M50 0 L100 28 L50 56 L0 28 Z" fill={fillColorTop} stroke={strokeColor} strokeWidth="2.5" />
-            <path d="M0 28 L50 56 L50 112 L0 84 Z" fill={fillColorLeft} stroke={strokeColor} strokeWidth="2.5" />
-            <path d="M50 56 L100 28 L100 84 L50 112 Z" fill={fillColorRight} stroke={strokeColor} strokeWidth="2.5" />
+          {/* Back/Top Cube */}
+          <g transform="translate(68, 12)">
+            <path
+              d="M50 0 L100 28 L50 56 L0 28 Z"
+              fill={fillColor}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            <path
+              d="M0 28 L50 56 L50 110 L0 82 Z"
+              fill={fillColor}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            <path
+              d="M50 56 L100 28 L100 82 L50 110 Z"
+              fill={fillColor}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
           </g>
 
-          {/* Cube 2 (Right shifted) */}
-          <g transform="translate(60, 50)">
-            <path d="M50 0 L100 28 L50 56 L0 28 Z" fill={fillColorTop} stroke={strokeColor} strokeWidth="2.5" />
-            <path d="M0 28 L50 56 L50 112 L0 84 Z" fill={fillColorLeft} stroke={strokeColor} strokeWidth="2.5" />
-            <path d="M50 56 L100 28 L100 84 L50 112 Z" fill={fillColorRight} stroke={strokeColor} strokeWidth="2.5" />
+          {/* Middle/Left Cube */}
+          <g transform="translate(10, 52)">
+            <path
+              d="M50 0 L100 28 L50 56 L0 28 Z"
+              fill={fillColor}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            <path
+              d="M0 28 L50 56 L50 110 L0 82 Z"
+              fill={fillColor}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            <path
+              d="M50 56 L100 28 L100 82 L50 110 Z"
+              fill={fillColor}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
           </g>
 
-          {/* Cube 3 (Lower front) */}
-          <g transform="translate(10, 110)">
-            <path d="M50 0 L100 28 L50 56 L0 28 Z" fill={fillColorTop} stroke={strokeColor} strokeWidth="2.5" />
-            <path d="M0 28 L50 56 L50 112 L0 84 Z" fill={fillColorLeft} stroke={strokeColor} strokeWidth="2.5" />
-            <path d="M50 56 L100 28 L100 84 L50 112 Z" fill={fillColorRight} stroke={strokeColor} strokeWidth="2.5" />
+          {/* Front/Right Cube */}
+          <g transform="translate(80, 92)">
+            <path
+              d="M50 0 L100 28 L50 56 L0 28 Z"
+              fill={fillColor}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            <path
+              d="M0 28 L50 56 L50 110 L0 82 Z"
+              fill={fillColor}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            <path
+              d="M50 56 L100 28 L100 82 L50 110 Z"
+              fill={fillColor}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
           </g>
         </svg>
       </div>
     );
   }
 
+  // Variant "stacked" (Vertical column of 4 cubes stacked along the border - Image 1 & 2)
   if (variant === "stacked") {
     return (
       <div className={`pointer-events-none select-none ${className}`}>
         <svg
-          viewBox="0 0 120 280"
-          className="w-full h-auto drop-shadow-md"
+          viewBox="0 0 120 310"
+          className="w-full h-auto drop-shadow-lg"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Stacked isometric towers */}
-          {[0, 60, 120, 180].map((y, idx) => (
+          {/* 4 Identical Stacked Cubes */}
+          {[10, 80, 150, 220].map((y, idx) => (
             <g key={idx} transform={`translate(10, ${y})`}>
-              <path d="M50 0 L100 28 L50 56 L0 28 Z" fill={fillColorTop} stroke={strokeColor} strokeWidth="2.5" />
-              <path d="M0 28 L50 56 L50 84 L0 56 Z" fill={fillColorLeft} stroke={strokeColor} strokeWidth="2.5" />
-              <path d="M50 56 L100 28 L100 56 L50 84 Z" fill={fillColorRight} stroke={strokeColor} strokeWidth="2.5" />
+              {/* Top Rhombus Face */}
+              <path
+                d="M50 0 L100 28 L50 56 L0 28 Z"
+                fill={fillColor}
+                stroke={strokeColor}
+                strokeWidth={strokeWidth}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+              {/* Left Side Face */}
+              <path
+                d="M0 28 L50 56 L50 84 L0 56 Z"
+                fill={fillColor}
+                stroke={strokeColor}
+                strokeWidth={strokeWidth}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+              {/* Right Side Face */}
+              <path
+                d="M50 56 L100 28 L100 56 L50 84 Z"
+                fill={fillColor}
+                stroke={strokeColor}
+                strokeWidth={strokeWidth}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
             </g>
           ))}
         </svg>
@@ -74,34 +165,97 @@ export default function IsometricCubes({
     );
   }
 
-  // Variant "right"
+  // Variant "right" (3 Stepped Cubes - Mirrored for Right Corner)
   return (
     <div className={`pointer-events-none select-none ${className}`}>
       <svg
-        viewBox="0 0 240 220"
-        className="w-full h-auto drop-shadow-md"
+        viewBox="0 0 220 220"
+        className="w-full h-auto drop-shadow-lg"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Back Cube */}
-        <g transform="translate(110, 20)">
-          <path d="M50 0 L100 28 L50 56 L0 28 Z" fill={fillColorTop} stroke={strokeColor} strokeWidth="2.5" />
-          <path d="M0 28 L50 56 L50 112 L0 84 Z" fill={fillColorLeft} stroke={strokeColor} strokeWidth="2.5" />
-          <path d="M50 56 L100 28 L100 84 L50 112 Z" fill={fillColorRight} stroke={strokeColor} strokeWidth="2.5" />
+        {/* Back/Top Cube */}
+        <g transform="translate(40, 12)">
+          <path
+            d="M50 0 L100 28 L50 56 L0 28 Z"
+            fill={fillColor}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+          <path
+            d="M0 28 L50 56 L50 110 L0 82 Z"
+            fill={fillColor}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+          <path
+            d="M50 56 L100 28 L100 82 L50 110 Z"
+            fill={fillColor}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
         </g>
 
-        {/* Lower Left Cube */}
-        <g transform="translate(60, 60)">
-          <path d="M50 0 L100 28 L50 56 L0 28 Z" fill={fillColorTop} stroke={strokeColor} strokeWidth="2.5" />
-          <path d="M0 28 L50 56 L50 112 L0 84 Z" fill={fillColorLeft} stroke={strokeColor} strokeWidth="2.5" />
-          <path d="M50 56 L100 28 L100 84 L50 112 Z" fill={fillColorRight} stroke={strokeColor} strokeWidth="2.5" />
+        {/* Front/Left Cube */}
+        <g transform="translate(10, 92)">
+          <path
+            d="M50 0 L100 28 L50 56 L0 28 Z"
+            fill={fillColor}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+          <path
+            d="M0 28 L50 56 L50 110 L0 82 Z"
+            fill={fillColor}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+          <path
+            d="M50 56 L100 28 L100 82 L50 110 Z"
+            fill={fillColor}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
         </g>
 
-        {/* Lower Right Front Cube */}
-        <g transform="translate(110, 90)">
-          <path d="M50 0 L100 28 L50 56 L0 28 Z" fill={fillColorTop} stroke={strokeColor} strokeWidth="2.5" />
-          <path d="M0 28 L50 56 L50 112 L0 84 Z" fill={fillColorLeft} stroke={strokeColor} strokeWidth="2.5" />
-          <path d="M50 56 L100 28 L100 84 L50 112 Z" fill={fillColorRight} stroke={strokeColor} strokeWidth="2.5" />
+        {/* Middle/Right Cube */}
+        <g transform="translate(80, 52)">
+          <path
+            d="M50 0 L100 28 L50 56 L0 28 Z"
+            fill={fillColor}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+          <path
+            d="M0 28 L50 56 L50 110 L0 82 Z"
+            fill={fillColor}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+          <path
+            d="M50 56 L100 28 L100 82 L50 110 Z"
+            fill={fillColor}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
         </g>
       </svg>
     </div>
