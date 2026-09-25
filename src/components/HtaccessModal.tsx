@@ -14,7 +14,7 @@ export default function HtaccessModal({ isOpen, onClose, targetUrl = "website" }
 
   if (!isOpen) return null;
 
-  const htaccessContent = `# ========================================================
+  const htaccessContent = `# =======================================================
 # SAFEXPLORE - ANTI SEO CLOAKING & MALWARE PROTECTION
 # Domain Target: ${targetUrl}
 # Generated: ${new Date().toLocaleDateString("id-ID")}
